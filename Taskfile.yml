@@ -1,0 +1,62 @@
+version: '3'
+
+vars:
+  NAME: widemath
+  RELEASE_BUILD: "false"
+  RELEASE_PRESET: "ci-ubuntu"
+
+tasks:
+  deps:
+    dir: .
+    cmds:
+      - conan install . -s build_type=Debug -b missing -pr cpp23 -pr:b cpp23
+      - conan install . -s build_type=Release -b missing -pr cpp23 -pr:b cpp23
+
+  init:
+    dir: .
+    preconditions:
+      - test -f CMakeUserPresets.json
+    cmds:
+      - cmake --preset=dev
+      - cmake --preset={{.RELEASE_PRESET}} -DCMAKE_BUILD_TYPE=Release
+
+
+  build:
+    dir: .
+    vars:
+      CMAKE_SUFFIX: '{{if eq .RELEASE_BUILD "true"}}build --config Release{{else}}--preset=dev{{end}}'
+    preconditions:
+      - test -f CMakeUserPresets.json
+    cmds:
+      - cmake --build {{.CMAKE_SUFFIX}} -j 
+
+  run:
+    dir: .
+    vars:
+      PATH: '{{if eq .RELEASE_BUILD "true"}}build/{{.NAME}}{{else}}build/dev/{{.NAME}}{{end}}'
+    cmds:
+      - task: build
+      - ./{{ .PATH }}
+
+  run-perf:
+    dir: .
+    vars:
+      PATH: '{{if eq .RELEASE_BUILD "true"}}build/{{.NAME}}{{else}}build/dev/{{.NAME}}{{end}}'
+    cmds:
+      - task: build
+      - perf record -g ./{{ .PATH }}
+
+  test:
+    dir: '{{if eq .RELEASE_BUILD "true"}}./build{{else}}.{{end}}'
+    vars:
+      DEV_TEST_FLAGS: '--preset=dev --timeout 1'
+      RELEASE_TEST_FLAGS: '--output-on-failure --no-tests=error -C Release --timeout 2'
+      TEST_FLAGS: '{{if eq .RELEASE_BUILD "true"}}{{.RELEASE_TEST_FLAGS}}{{else}}{{.DEV_TEST_FLAGS}}{{end}}'
+    cmds:
+      - task: build
+      - ctest {{.TEST_FLAGS}}
+
+  fmt:
+    dir: .
+    cmds:
+      - cmake -D FIX=YES -P cmake/lint.cmake
