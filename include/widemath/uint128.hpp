@@ -45,6 +45,30 @@ struct uint128 {
         }
     }
 
+    uint128& operator*=(const uint128& other)
+    {
+        underlying high_bits = high * other.high;
+        if (high_bits != 0) [[unlikely]] {
+            throw std::runtime_error("high bit overflow");
+        }
+
+        underlying mid_bits = high * other.low + low * other.high;
+
+        underlying low_high_bits = (low >> 32) * (other.low >> 32);
+        underlying low_mid_bits = (low & 0xFFFFFFFF) * (other.low >> 32)
+                                  + (low >> 32) * (other.low & 0xFFFFFFFF);
+        underlying low_low_bits = (low & 0xFFFFFFFF) * (other.low & 0xFFFFFFFF);
+
+        mid_bits += low_high_bits;
+        mid_bits += (low_mid_bits >> 32);
+        underlying low_bits = (low_mid_bits << 32) | low_low_bits;
+
+        high = mid_bits;
+        low = low_bits;
+
+        return *this;
+    }
+
     uint128& operator+=(const uint128& other)
     {
         high += other.high;
@@ -99,6 +123,13 @@ private:
     {
         uint128 res = first;
         res -= second;
+        return res;
+    }
+
+    friend uint128 operator*(const uint128& first, const uint128& second)
+    {
+        uint128 res = first;
+        res *= second;
         return res;
     }
 };
