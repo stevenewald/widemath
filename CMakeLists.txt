@@ -55,7 +55,7 @@ target_include_directories(
     "\$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/export>"
 )
 
-target_compile_features(widemath_widemath PUBLIC cxx_std_20)
+target_compile_features(widemath_widemath PUBLIC cxx_std_23)
 
 find_package(fmt REQUIRED)
 target_link_libraries(widemath_widemath PRIVATE fmt::fmt)

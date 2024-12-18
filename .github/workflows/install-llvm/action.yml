@@ -1,0 +1,18 @@
+name: Install LLVM
+on:
+  workflow_call: 
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install LLVM 19
+      shell: bash
+      run: |
+        set -e
+        wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc > /dev/null
+        sudo apt-add-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-19 main"
+        sudo apt update
+        sudo apt install -y \
+          llvm-19 llvm-19-dev llvm-19-tools \
+          clang-19 clang-tidy-19 clang-format-19 \
+          clang-tools-19 libclang-19-dev
