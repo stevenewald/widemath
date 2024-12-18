@@ -19,7 +19,7 @@ include(Catch)
 
 add_executable(widemath_test 
 	source/widemath_test.cpp
-	source/int128_test.cpp)
+	source/uint128_test.cpp)
 target_link_libraries(
     widemath_test PRIVATE
     widemath::widemath
