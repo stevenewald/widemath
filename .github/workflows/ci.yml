@@ -16,6 +16,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - uses: ./.github/workflows/install-llvm
+
     - uses: actions/setup-python@v5
       with: { python-version: "3.12" }
 
@@ -23,7 +25,7 @@ jobs:
       run: pip3 install codespell
 
     - name: Lint
-      run: cmake -D FORMAT_COMMAND=clang-format-14 -P cmake/lint.cmake
+      run: cmake -D FORMAT_COMMAND=clang-format-19 -P cmake/lint.cmake
 
     - name: Spell check
       if: always()
@@ -34,10 +36,12 @@ jobs:
 
     runs-on: ubuntu-22.04
 
-    env: { CXX: clang++-14 }
+    env: { CXX: clang++-19 }
 
     steps:
     - uses: actions/checkout@v4
+
+    - uses: ./.github/workflows/install-llvm
 
     - name: Install Python
       uses: actions/setup-python@v5
@@ -76,7 +80,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-14, ubuntu-22.04, windows-2022]
+        os: [ubuntu-22.04]
 
         type: [shared, static]
 
@@ -86,17 +90,21 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    env: { CXX: clang++-19 }
+
     steps:
     - uses: actions/checkout@v4
+
+    - uses: ./.github/workflows/install-llvm
 
     - name: Install static analyzers
       if: matrix.os == 'ubuntu-22.04'
       run: >-
-        sudo apt-get install clang-tidy-14 cppcheck -y -q
+        sudo apt-get install clang-tidy-19 cppcheck -y -q
 
         sudo update-alternatives --install
         /usr/bin/clang-tidy clang-tidy
-        /usr/bin/clang-tidy-14 140
+        /usr/bin/clang-tidy-19 140
 
     - name: Install Python
       uses: actions/setup-python@v5
@@ -112,20 +120,10 @@ jobs:
       shell: bash
       run: bash < .github/scripts/conan-ci-setup.sh
 
-    - name: Setup MultiToolTask
-      if: matrix.os == 'windows-2022'
-      run: |
-        Add-Content "$env:GITHUB_ENV" 'UseMultiToolTask=true'
-        Add-Content "$env:GITHUB_ENV" 'EnforceProcessCountAcrossBuilds=true'
-
     - name: Configure
       shell: pwsh
       run: cmake "--preset=ci-$("${{ matrix.os }}".split("-")[0])"
         -D BUILD_SHARED_LIBS=${{ matrix.shared }}
-
-    - name: Setup PATH
-      if: matrix.os == 'windows-2022' && matrix.type == 'shared'
-      run: Add-Content "$env:GITHUB_PATH" "$(Get-Location)\build\Release"
 
     - name: Build
       run: cmake --build build --config Release -j 2

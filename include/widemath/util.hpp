@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdexcept>
+#include <utility>
 
 namespace wm {
 constexpr void assert(bool expr)

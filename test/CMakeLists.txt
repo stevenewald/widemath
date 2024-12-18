@@ -25,7 +25,7 @@ target_link_libraries(
     widemath::widemath
     Catch2::Catch2WithMain
 )
-target_compile_features(widemath_test PRIVATE cxx_std_20)
+target_compile_features(widemath_test PRIVATE cxx_std_23)
 
 catch_discover_tests(widemath_test)
 
