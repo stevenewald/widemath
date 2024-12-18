@@ -1,4 +1,5 @@
 # Widemath - VERY WIP
+# NO SIMD IMPLEMENTED YET
 
 WideMath is a library designed to provide efficient support for 128-bit arithmetic, encompassing both integer and floating-point operations. Recognizing that native 128-bit arithmetic is rarely supported by modern hardware architectures, WideMath implements these operations in software. 
 
