@@ -2,7 +2,7 @@
 
 #include "util.hpp"
 
-#include <cstdint>
+#include <cmath>
 
 #include <limits>
 #include <stdexcept>
@@ -43,6 +43,41 @@ struct uint128 {
             }
             --high;
         }
+    }
+
+    uint128& operator*=(const uint128& other)
+    {
+        if (high != 0 && other.high != 0) {
+            throw std::runtime_error("Multiplication caused 128-bit overflow");
+        }
+
+        underlying new_high_bits = (high * other.low) + (low * other.high);
+
+        underlying low_high_bits = (low >> 32) * (other.low >> 32);
+        underlying low_mid_bits_p1 = (low & 0xFFFFFFFFULL) * (other.low >> 32);
+        underlying low_mid_bits_p2 = (low >> 32) * (other.low & 0xFFFFFFFFULL);
+        underlying low_low_bits = (low & 0xFFFFFFFFULL) * (other.low & 0xFFFFFFFFULL);
+
+        underlying new_low_bits = low_low_bits;
+        if (__builtin_uaddll_overflow(
+                new_low_bits, low_mid_bits_p1 << 32, &new_low_bits
+            )) {
+            ++new_high_bits;
+        }
+        if (__builtin_uaddll_overflow(
+                new_low_bits, low_mid_bits_p2 << 32, &new_low_bits
+            )) {
+            ++new_high_bits;
+        }
+
+        new_high_bits += low_high_bits;
+        new_high_bits += (low_mid_bits_p1 >> 32);
+        new_high_bits += (low_mid_bits_p2 >> 32);
+
+        high = new_high_bits;
+        low = new_low_bits;
+
+        return *this;
     }
 
     uint128& operator+=(const uint128& other)
@@ -99,6 +134,13 @@ private:
     {
         uint128 res = first;
         res -= second;
+        return res;
+    }
+
+    friend uint128 operator*(const uint128& first, const uint128& second)
+    {
+        uint128 res = first;
+        res *= second;
         return res;
     }
 };

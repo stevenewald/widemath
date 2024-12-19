@@ -4,7 +4,7 @@
 #include <utility>
 
 namespace wm {
-constexpr void assert(bool expr)
+inline void assert(bool expr, const std::string& err = "Assertion error")
 {
 #ifdef NDEBUG
     if (!expr) {
@@ -12,7 +12,7 @@ constexpr void assert(bool expr)
     }
 #else
     if (!expr) [[unlikely]] {
-        throw std::runtime_error("Assertion error");
+        throw std::runtime_error(err);
     }
 #endif
 }
