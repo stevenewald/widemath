@@ -60,7 +60,7 @@ tasks:
     dir: .
     cmds:
       - task: build
-      - ./build/benchmark/widemath_benchmarks  --benchmark_report_aggregates_only=true #--benchmark_repetitions=5 --benchmark_min_warmup_time=0.5
+      - ./build/benchmark/widemath_benchmarks  --benchmark_report_aggregates_only=true --benchmark_min_warmup_time=0.25 #--benchmark_repetitions=3 
 
 
 

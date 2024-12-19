@@ -82,7 +82,7 @@ static void BM_WM_MULTIPLICATION(benchmark::State& state)
 static void BM_BUILTIN_MULTIPLICATION(benchmark::State& state)
 {
     int64_t num_steps = state.range(0);
-    uint64_t step =
+    __uint128_t step =
         std::numeric_limits<uint64_t>::max() / static_cast<uint64_t>(num_steps);
 
     for ([[maybe_unused]] auto _ : state) {

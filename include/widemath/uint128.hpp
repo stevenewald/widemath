@@ -12,33 +12,66 @@
 
 namespace wm {
 class WIDEMATH_EXPORT uint128 {
-// 128-bit over/underflow is well-defined and uses modulo arithmetic
+    // 128-bit over/underflow is well-defined and uses modulo arithmetic
 public:
     // Cannot use uint64_t for __builtin_overflow compatibility
     using underlying = unsigned long long;
     static_assert(sizeof(underlying) == 8);
 
-    underlying high;
     underlying low;
+    underlying high;
 
     constexpr uint128() = default;
 
     constexpr uint128(__uint128_t val) :
-        high{static_cast<underlying>(val >> 64)}, low{static_cast<underlying>(val)}
+        low{static_cast<underlying>(val)}, high{static_cast<underlying>(val >> 64)}
     {}
 
     constexpr uint128(underlying high_bits, underlying low_bits) :
-        high{high_bits}, low{low_bits}
+        low{low_bits}, high{high_bits}
     {}
 
-    uint128& operator++();
-    uint128 operator++(int);
+    uint128& operator++() noexcept
+    {
+        if (__builtin_uaddll_overflow(low, 1, &low)) {
+            ++high;
+        }
+        return *this;
+    }
 
-    uint128& operator--();
-    uint128 operator--(int);
+    uint128 operator++(int) noexcept
+    {
+        uint128 ret = *this;
+        ++*this;
+        return ret;
+    }
 
-    std::strong_ordering operator<=>(const uint128& other) const;
-    bool operator==(const uint128& other) const = default;
+    uint128 operator--(int) noexcept
+    {
+        uint128 ret = *this;
+        --*this;
+        return ret;
+    }
+
+    uint128& operator--() noexcept
+    {
+        if (__builtin_usubll_overflow(low, 1, &low)) {
+            --high;
+        }
+        return *this;
+    }
+
+    std::strong_ordering operator<=>(const uint128& other) const noexcept
+    {
+        std::strong_ordering cmp = high <=> other.high;
+        if (cmp != std::strong_ordering::equal) {
+            return cmp;
+        }
+
+        return low <=> other.low;
+    }
+
+    bool operator==(const uint128& other) const noexcept = default;
 
     uint128& operator*=(const uint128& other) noexcept
     {
@@ -72,16 +105,39 @@ public:
         return *this;
     }
 
-    explicit operator underlying() const;
-    explicit operator __uint128_t() const;
+    explicit operator uint128::underlying() const noexcept { return low; }
+
+    explicit operator __uint128_t() const noexcept
+    {
+        __uint128_t high_bits = high;
+        high_bits <<= 64;
+        return high_bits + low;
+    }
 
 private:
-    friend WIDEMATH_EXPORT uint128
-    operator*(const uint128& first, const uint128& second);
-    friend WIDEMATH_EXPORT uint128
-    operator+(const uint128& first, const uint128& second);
-    friend WIDEMATH_EXPORT uint128
-    operator-(const uint128& first, const uint128& second);
+    inline friend WIDEMATH_EXPORT uint128
+    operator+(const uint128& first, const uint128& second) noexcept
+    {
+        uint128 res = first;
+        res += second;
+        return res;
+    }
+
+    inline friend WIDEMATH_EXPORT uint128
+    operator-(const uint128& first, const uint128& second) noexcept
+    {
+        uint128 res = first;
+        res -= second;
+        return res;
+    }
+
+    inline friend WIDEMATH_EXPORT uint128
+    operator*(const uint128& first, const uint128& second) noexcept
+    {
+        uint128 res = first;
+        res *= second;
+        return res;
+    }
 };
 
 } // namespace wm
