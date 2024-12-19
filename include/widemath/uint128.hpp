@@ -11,8 +11,8 @@
 #include <stdexcept>
 
 namespace wm {
-// 128-bit over/underflow is well-defined and will throw an exception
 class WIDEMATH_EXPORT uint128 {
+// 128-bit over/underflow is well-defined and uses modulo arithmetic
 public:
     // Cannot use uint64_t for __builtin_overflow compatibility
     using underlying = unsigned long long;
@@ -42,8 +42,6 @@ public:
 
     uint128& operator*=(const uint128& other) noexcept
     {
-        assert_true(high * other.high == 0);
-
         auto [new_low_bits, overflow] = carryless_multiply(low, other.low);
 
         underlying new_high_bits = (high * other.low) + (low * other.high) + overflow;

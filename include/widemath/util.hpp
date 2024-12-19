@@ -4,7 +4,8 @@
 #include <utility>
 
 namespace wm {
-inline void assert_true(bool expr, const std::string& err = "Assertion error")
+inline void
+assert_true(bool expr, [[maybe_unused]] const std::string& err = "Assertion error")
 {
 #ifdef NDEBUG
     if (!expr) {

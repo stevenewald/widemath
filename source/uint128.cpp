@@ -11,9 +11,6 @@ namespace wm {
 uint128& uint128::operator++()
 {
     if (__builtin_uaddll_overflow(low, 1, &low)) {
-        if (high == std::numeric_limits<underlying>::max()) {
-            throw std::overflow_error("OVERFLOW");
-        }
         ++high;
     }
     return *this;
@@ -36,9 +33,6 @@ uint128 uint128::operator--(int)
 uint128& uint128::operator--()
 {
     if (__builtin_usubll_overflow(low, 1, &low)) {
-        if (high == std::numeric_limits<underlying>::min()) {
-            throw std::underflow_error("UNDERFLOW");
-        }
         --high;
     }
     return *this;
@@ -56,9 +50,6 @@ std::strong_ordering uint128::operator<=>(const uint128& other) const
 
 uint128::operator uint128::underlying() const
 {
-    if (high != 0) {
-        throw std::overflow_error("Overflow during narrowing cast");
-    }
     return low;
 }
 
