@@ -3,6 +3,7 @@
 #include "widemath/widemath_export.hpp"
 
 #include <cmath>
+#include <compare>
 
 #include <limits>
 
@@ -32,6 +33,9 @@ public:
 
     uint128& operator--();
     uint128 operator--(int);
+
+    std::strong_ordering operator<=>(const uint128& other) const;
+    bool operator==(const uint128& other) const = default;
 
     uint128& operator*=(const uint128& other);
     uint128& operator+=(const uint128& other);

@@ -1,5 +1,7 @@
 #include "widemath/uint128.hpp"
 
+#include <compare>
+
 #include <stdexcept>
 
 namespace wm {
@@ -8,7 +10,7 @@ uint128& uint128::operator++()
 {
     if (__builtin_uaddll_overflow(low, 1, &low)) {
         if (high == std::numeric_limits<underlying>::max()) {
-            throw std::runtime_error("OVERFLOW");
+            throw std::overflow_error("OVERFLOW");
         }
         ++high;
     }
@@ -33,17 +35,27 @@ uint128& uint128::operator--()
 {
     if (__builtin_usubll_overflow(low, 1, &low)) {
         if (high == std::numeric_limits<underlying>::min()) {
-            throw std::runtime_error("UNDERFLOW");
+            throw std::underflow_error("UNDERFLOW");
         }
         --high;
     }
     return *this;
 }
 
+std::strong_ordering uint128::operator<=>(const uint128& other) const
+{
+    std::strong_ordering cmp = high <=> other.high;
+    if (cmp != std::strong_ordering::equal) {
+        return cmp;
+    }
+
+    return low <=> other.low;
+}
+
 uint128& uint128::operator*=(const uint128& other)
 {
     if (high != 0 && other.high != 0) {
-        throw std::runtime_error("Multiplication caused 128-bit overflow");
+        throw std::overflow_error("Multiplication caused 128-bit overflow");
     }
 
     underlying new_high_bits = (high * other.low) + (low * other.high);
@@ -76,7 +88,7 @@ uint128& uint128::operator+=(const uint128& other)
     high += other.high;
     if (__builtin_uaddll_overflow(low, other.low, &low)) {
         if (high == std::numeric_limits<underlying>::max()) {
-            throw std::runtime_error("OVERFLOW");
+            throw std::overflow_error("OVERFLOW");
         }
         ++high;
     }
@@ -89,7 +101,7 @@ uint128& uint128::operator-=(const uint128& other)
     high -= other.high;
     if (__builtin_usubll_overflow(low, other.low, &low)) {
         if (high == std::numeric_limits<underlying>::min()) {
-            throw std::runtime_error("UNDERFLOW");
+            throw std::underflow_error("UNDERFLOW");
         }
         --high;
     }
@@ -100,7 +112,7 @@ uint128& uint128::operator-=(const uint128& other)
 uint128::operator uint128::underlying() const
 {
     if (high != 0) {
-        throw std::runtime_error("Overflow during narrowing cast");
+        throw std::overflow_error("Overflow during narrowing cast");
     }
     return low;
 }
