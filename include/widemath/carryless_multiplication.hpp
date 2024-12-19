@@ -7,7 +7,7 @@ struct carryless_uint64_product {
 };
 
 inline carryless_uint64_product
-carryless_multiply(unsigned long long first, unsigned long long second)
+carryless_multiply(unsigned long long first, unsigned long long second) noexcept
 {
     using ull = unsigned long long;
     ull high_bits = (first >> 32) * (second >> 32);

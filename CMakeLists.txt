@@ -5,20 +5,22 @@ include(cmake/prelude.cmake)
 project(
     widemath
     VERSION 0.1.0
-    DESCRIPTION "Short description"
-    HOMEPAGE_URL "https://example.com/"
+	DESCRIPTION "High-Performance 128-Bit Arithmetic"
+    HOMEPAGE_URL "https://stevenewald.com/"
     LANGUAGES CXX
 )
 
 include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+
 # ---- Declare library ----
 
 add_library(
     widemath_widemath
     source/widemath.cpp
-    source/uint128.cpp
 )
 add_library(widemath::widemath ALIAS widemath_widemath)
 

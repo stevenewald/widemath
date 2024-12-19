@@ -13,3 +13,4 @@ class Recipe(ConanFile):
 
     def build_requirements(self):
         self.test_requires("catch2/3.7.0")
+        self.test_requires("benchmark/1.9.0")

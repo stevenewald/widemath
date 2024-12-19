@@ -119,32 +119,39 @@ TEST_CASE("pre-decrement correctly decrements with overflow", "[uint128]")
     CHECK(num.low == std::numeric_limits<wm::uint128::underlying>::max());
 }
 
-TEST_CASE("throws from 128 bit subtraction underflow", "[uint128]")
+TEST_CASE("128 bit underflow uses modulo arithmetic correctly", "[uint128]")
 {
     wm::uint128 min = MIN_UINT128;
-    CHECK_THROWS(min - 1);
-    CHECK_THROWS(--min);
+    CHECK(min - 1 == MAX_UINT128);
+    CHECK(--min == MAX_UINT128);
 }
 
-TEST_CASE("throws from 128 bit multiplication overflow", "[uint128]")
+TEST_CASE(
+    "128 bit multiplication overflow correctly uses modulo arithmetic", "[uint128]"
+)
 {
-    wm::uint128 max = std::numeric_limits<__uint128_t>::max() / 2;
-    CHECK_THROWS(max * max);
+    wm::uint128 result_wm = MAX_UINT64 * MAX_UINT64;
+
+    __uint128_t result_builtin = std::numeric_limits<uint64_t>::max();
+    result_builtin *= result_builtin;
+
+    CHECK(result_wm == result_builtin);
+    CHECK(result_wm * result_wm == result_builtin * result_builtin);
 }
 
-TEST_CASE("throws from 128 bit addition overflow", "[uint128]")
+TEST_CASE("128 bit overflow uses modulo arithmetic correctly", "[uint128]")
 {
-    wm::uint128 max = std::numeric_limits<wm::uint128>::max();
-    CHECK_THROWS(max + 1);
-    CHECK_THROWS(++max);
+    wm::uint128 max = MAX_UINT128;
+    CHECK(max + 1 == MIN_UINT128);
+    CHECK(++max == MIN_UINT128);
 }
 
-TEST_CASE("narrowing cast refuses if overflow present", "[uint128]")
+TEST_CASE("narrowing cast only returns lower bits", "[uint128]")
 {
     wm::uint128 max_64{std::numeric_limits<wm::uint128::underlying>::max()};
     max_64 += 1;
 
-    CHECK_THROWS(static_cast<wm::uint128::underlying>(max_64));
+    CHECK(static_cast<wm::uint128::underlying>(max_64) == 0);
 }
 
 TEST_CASE(
@@ -240,11 +247,4 @@ TEST_CASE("multiplying with no low bit overflow yields correct value", "[uint128
     ++max_64_builtin;
 
     CHECK(static_cast<__uint128_t>(max_64_plus_1 * five) == max_64_builtin * 5);
-}
-
-TEST_CASE("multiplying with high bit overflow throws", "[uint128]")
-{
-    wm::uint128 max_64_plus_1 = MAX_UINT64 + 1;
-
-    CHECK_THROWS(max_64_plus_1 * max_64_plus_1);
 }

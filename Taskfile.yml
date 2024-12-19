@@ -2,7 +2,7 @@ version: '3'
 
 vars:
   NAME: widemath
-  RELEASE_BUILD: "false"
+  RELEASE_BUILD: "true"
   RELEASE_PRESET: "ci-ubuntu"
 
 tasks:
@@ -55,6 +55,14 @@ tasks:
     cmds:
       - task: build
       - ctest {{.TEST_FLAGS}}
+
+  bench:
+    dir: .
+    cmds:
+      - task: build
+      - ./build/benchmark/widemath_benchmarks  --benchmark_report_aggregates_only=true --benchmark_min_warmup_time=0.25 #--benchmark_repetitions=3 
+
+
 
   fmt:
     dir: .
