@@ -2,6 +2,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <cstdint>
+
 #include <limits>
 
 static constexpr wm::uint128 MAX_UINT64 =
@@ -74,14 +76,20 @@ TEST_CASE("pre-decrement correctly decrements with overflow", "[uint128]")
     CHECK(num.low == std::numeric_limits<wm::uint128::underlying>::max());
 }
 
-TEST_CASE("throws from 128 bit underflow", "[uint128]")
+TEST_CASE("throws from 128 bit subtraction underflow", "[uint128]")
 {
     wm::uint128 min = MIN_UINT128;
     CHECK_THROWS(min - 1);
     CHECK_THROWS(--min);
 }
 
-TEST_CASE("throws from 128 bit overflow", "[uint128]")
+TEST_CASE("throws from 128 bit multiplication overflow", "[uint128]")
+{
+    wm::uint128 max = std::numeric_limits<__uint128_t>::max() / 2;
+    CHECK_THROWS(max * max);
+}
+
+TEST_CASE("throws from 128 bit addition overflow", "[uint128]")
 {
     wm::uint128 max = std::numeric_limits<wm::uint128>::max();
     CHECK_THROWS(max + 1);
@@ -110,6 +118,39 @@ TEST_CASE(
          builtin_val += block) {
         CHECK(static_cast<__uint128_t>(widemath_val) == builtin_val);
         widemath_val += block;
+    }
+}
+
+TEST_CASE(
+    "100 squares from 0 to uint64_max is consistent with builtin uint128", "[uint128]"
+)
+{
+    __uint128_t max_bound = std::numeric_limits<uint64_t>::max();
+    __uint128_t min_bound = std::numeric_limits<__uint128_t>::min();
+    __uint128_t block = (max_bound - min_bound) / 1000;
+
+    for (__uint128_t value = min_bound; value < max_bound; value += block) {
+        wm::uint128 val{value};
+        wm::uint128 squared = val * val;
+        REQUIRE(static_cast<__uint128_t>(squared) == value * value);
+    }
+}
+
+TEST_CASE(
+    "100 asymmetric multiples from 0 to uint64_max is consistent with builtin uint128",
+    "[uint128]"
+)
+{
+    constexpr __uint128_t max_bound = std::numeric_limits<uint64_t>::max();
+    constexpr __uint128_t min_bound = std::numeric_limits<__uint128_t>::min();
+    constexpr __uint128_t block = (max_bound - min_bound) / 1000;
+
+    for (__uint128_t value = min_bound; value < max_bound; value += block) {
+        __uint128_t left = value;
+        __uint128_t right = max_bound - value;
+        wm::uint128 left_wm{left};
+        wm::uint128 right_wm{right};
+        REQUIRE(static_cast<__uint128_t>(left_wm * right_wm) == left * right);
     }
 }
 
