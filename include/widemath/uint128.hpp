@@ -1,15 +1,18 @@
 #pragma once
 
-#include "util.hpp"
+#include "widemath/widemath_export.hpp"
 
 #include <cmath>
 
 #include <limits>
-#include <stdexcept>
 
 namespace wm {
-struct uint128 {
+// 128-bit over/underflow is well-defined and will throw an exception
+class WIDEMATH_EXPORT uint128 {
+public:
+    // Cannot use uint64_t for __builtin_overflow compatibility
     using underlying = unsigned long long;
+    static_assert(sizeof(underlying) == 8);
 
     underlying high;
     underlying low;
@@ -24,125 +27,26 @@ struct uint128 {
         high{high_bits}, low{low_bits}
     {}
 
-    uint128& operator++()
-    {
-        if (__builtin_uaddll_overflow(low, 1, &low)) {
-            if (high == std::numeric_limits<underlying>::max()) {
-                throw std::runtime_error("OVERFLOW");
-            }
-            ++high;
-        }
-        return *this;
-    }
+    uint128& operator++();
+    uint128 operator++(int);
 
-    void operator--()
-    {
-        if (__builtin_usubll_overflow(low, 1, &low)) {
-            if (high == std::numeric_limits<underlying>::min()) {
-                throw std::runtime_error("UNDERFLOW");
-            }
-            --high;
-        }
-    }
+    uint128& operator--();
+    uint128 operator--(int);
 
-    uint128& operator*=(const uint128& other)
-    {
-        if (high != 0 && other.high != 0) {
-            throw std::runtime_error("Multiplication caused 128-bit overflow");
-        }
+    uint128& operator*=(const uint128& other);
+    uint128& operator+=(const uint128& other);
+    uint128& operator-=(const uint128& other);
 
-        underlying new_high_bits = (high * other.low) + (low * other.high);
-
-        underlying low_high_bits = (low >> 32) * (other.low >> 32);
-        underlying low_mid_bits_p1 = (low & 0xFFFFFFFFULL) * (other.low >> 32);
-        underlying low_mid_bits_p2 = (low >> 32) * (other.low & 0xFFFFFFFFULL);
-        underlying low_low_bits = (low & 0xFFFFFFFFULL) * (other.low & 0xFFFFFFFFULL);
-
-        underlying new_low_bits = low_low_bits;
-        if (__builtin_uaddll_overflow(
-                new_low_bits, low_mid_bits_p1 << 32, &new_low_bits
-            )) {
-            ++new_high_bits;
-        }
-        if (__builtin_uaddll_overflow(
-                new_low_bits, low_mid_bits_p2 << 32, &new_low_bits
-            )) {
-            ++new_high_bits;
-        }
-
-        new_high_bits += low_high_bits;
-        new_high_bits += (low_mid_bits_p1 >> 32);
-        new_high_bits += (low_mid_bits_p2 >> 32);
-
-        high = new_high_bits;
-        low = new_low_bits;
-
-        return *this;
-    }
-
-    uint128& operator+=(const uint128& other)
-    {
-        high += other.high;
-        if (__builtin_uaddll_overflow(low, other.low, &low)) {
-            if (high == std::numeric_limits<underlying>::max()) {
-                throw std::runtime_error("OVERFLOW");
-            }
-            ++high;
-        }
-
-        return *this;
-    }
-
-    uint128& operator-=(const uint128& other)
-    {
-        high -= other.high;
-        if (__builtin_usubll_overflow(low, other.low, &low)) {
-            if (high == std::numeric_limits<underlying>::min()) {
-                throw std::runtime_error("UNDERFLOW");
-            }
-            --high;
-        }
-
-        return *this;
-    }
-
-    explicit operator underlying() const
-    {
-        if (high != 0) {
-            throw std::runtime_error("Overflow during narrowing cast");
-        }
-        return low;
-    }
-
-    explicit operator __uint128_t() const
-    {
-        __uint128_t high_bits = high;
-        high_bits <<= 64;
-        return high_bits + low;
-    }
+    explicit operator underlying() const;
+    explicit operator __uint128_t() const;
 
 private:
-    // TODO: handwrite these
-    friend uint128 operator+(const uint128& first, const uint128& second)
-    {
-        uint128 res = first;
-        res += second;
-        return res;
-    }
-
-    friend uint128 operator-(const uint128& first, const uint128& second)
-    {
-        uint128 res = first;
-        res -= second;
-        return res;
-    }
-
-    friend uint128 operator*(const uint128& first, const uint128& second)
-    {
-        uint128 res = first;
-        res *= second;
-        return res;
-    }
+    friend WIDEMATH_EXPORT uint128
+    operator*(const uint128& first, const uint128& second);
+    friend WIDEMATH_EXPORT uint128
+    operator+(const uint128& first, const uint128& second);
+    friend WIDEMATH_EXPORT uint128
+    operator-(const uint128& first, const uint128& second);
 };
 
 } // namespace wm

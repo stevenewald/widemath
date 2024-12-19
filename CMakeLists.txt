@@ -18,6 +18,7 @@ include(cmake/variables.cmake)
 add_library(
     widemath_widemath
     source/widemath.cpp
+    source/uint128.cpp
 )
 add_library(widemath::widemath ALIAS widemath_widemath)
 

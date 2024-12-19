@@ -39,8 +39,15 @@ TEST_CASE("correctly adds with 64-bit overflow", "[uint128]")
 TEST_CASE("pre-increment correctly increments small numbers", "[uint128]")
 {
     wm::uint128 num{8};
-    ++num;
 
+    CHECK(static_cast<wm::uint128::underlying>(++num) == 9);
+}
+
+TEST_CASE("post-increment correctly increments small numbers", "[uint128]")
+{
+    wm::uint128 num{8};
+
+    CHECK(static_cast<wm::uint128::underlying>(num++) == 8);
     CHECK(static_cast<wm::uint128::underlying>(num) == 9);
 }
 
@@ -56,11 +63,16 @@ TEST_CASE("pre-increment correctly increments with 64-bit overflow", "[uint128]"
     CHECK(num.low == 1);
 }
 
-TEST_CASE("pre-decrement correctly decrements without overflow", "[uint128]")
+TEST_CASE("pre-decrement correctly decrements small numbers", "[uint128]")
 {
     wm::uint128 num{8};
-    --num;
+    CHECK(static_cast<wm::uint128::underlying>(--num) == 7);
+}
 
+TEST_CASE("post-decrement correctly decrements small numbers", "[uint128]")
+{
+    wm::uint128 num{8};
+    CHECK(static_cast<wm::uint128::underlying>(num--) == 8);
     CHECK(static_cast<wm::uint128::underlying>(num) == 7);
 }
 
