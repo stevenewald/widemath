@@ -19,6 +19,7 @@ Checks: "\
   fuchsia-trailing-return,\
   fuchsia-virtual-inheritance,\
   google-runtime-int,\
+  -clang-analyzer-deadcode.DeadStores,\
   -hicpp-braces-around-statements,\
   -google-readability-braces-around-statements,\
   -llvm-header-guard,\

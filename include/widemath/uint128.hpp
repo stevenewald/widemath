@@ -1,11 +1,14 @@
 #pragma once
 
+#include "widemath/carryless_multiplication.hpp"
+#include "widemath/util.hpp"
 #include "widemath/widemath_export.hpp"
 
 #include <cmath>
 #include <compare>
 
 #include <limits>
+#include <stdexcept>
 
 namespace wm {
 // 128-bit over/underflow is well-defined and will throw an exception
@@ -37,9 +40,39 @@ public:
     std::strong_ordering operator<=>(const uint128& other) const;
     bool operator==(const uint128& other) const = default;
 
-    uint128& operator*=(const uint128& other);
-    uint128& operator+=(const uint128& other);
-    uint128& operator-=(const uint128& other);
+    uint128& operator*=(const uint128& other) noexcept
+    {
+        assert_true(high * other.high == 0);
+
+        auto [new_low_bits, overflow] = carryless_multiply(low, other.low);
+
+        underlying new_high_bits = (high * other.low) + (low * other.high) + overflow;
+
+        low = new_low_bits;
+        high = new_high_bits;
+
+        return *this;
+    }
+
+    uint128& operator+=(const uint128& other) noexcept
+    {
+        if (__builtin_uaddll_overflow(low, other.low, &low)) {
+            ++high;
+        }
+        high += other.high;
+
+        return *this;
+    }
+
+    uint128& operator-=(const uint128& other) noexcept
+    {
+        if (__builtin_usubll_overflow(low, other.low, &low)) {
+            --high;
+        }
+        high -= other.high;
+
+        return *this;
+    }
 
     explicit operator underlying() const;
     explicit operator __uint128_t() const;

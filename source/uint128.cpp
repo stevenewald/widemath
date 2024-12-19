@@ -54,48 +54,6 @@ std::strong_ordering uint128::operator<=>(const uint128& other) const
     return low <=> other.low;
 }
 
-uint128& uint128::operator*=(const uint128& other)
-{
-    if (high != 0 && other.high != 0) {
-        throw std::overflow_error("Multiplication caused 128-bit overflow");
-    }
-
-    auto [new_low_bits, overflow] = carryless_multiply(low, other.low);
-
-    underlying new_high_bits = (high * other.low) + (low * other.high) + overflow;
-
-    low = new_low_bits;
-    high = new_high_bits;
-
-    return *this;
-}
-
-uint128& uint128::operator+=(const uint128& other)
-{
-    high += other.high;
-    if (__builtin_uaddll_overflow(low, other.low, &low)) {
-        if (high == std::numeric_limits<underlying>::max()) {
-            throw std::overflow_error("OVERFLOW");
-        }
-        ++high;
-    }
-
-    return *this;
-}
-
-uint128& uint128::operator-=(const uint128& other)
-{
-    high -= other.high;
-    if (__builtin_usubll_overflow(low, other.low, &low)) {
-        if (high == std::numeric_limits<underlying>::min()) {
-            throw std::underflow_error("UNDERFLOW");
-        }
-        --high;
-    }
-
-    return *this;
-}
-
 uint128::operator uint128::underlying() const
 {
     if (high != 0) {
