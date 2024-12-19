@@ -1,5 +1,7 @@
 #include "widemath/uint128.hpp"
 
+#include "widemath/carryless_multiplication.hpp"
+
 #include <compare>
 
 #include <stdexcept>
@@ -58,27 +60,12 @@ uint128& uint128::operator*=(const uint128& other)
         throw std::overflow_error("Multiplication caused 128-bit overflow");
     }
 
-    underlying new_high_bits = (high * other.low) + (low * other.high);
+    auto [new_low_bits, overflow] = carryless_multiply(low, other.low);
 
-    underlying low_high_bits = (low >> 32) * (other.low >> 32);
-    underlying low_mid_bits_p1 = (low & 0xFFFFFFFFULL) * (other.low >> 32);
-    underlying low_mid_bits_p2 = (low >> 32) * (other.low & 0xFFFFFFFFULL);
-    underlying low_low_bits = (low & 0xFFFFFFFFULL) * (other.low & 0xFFFFFFFFULL);
+    underlying new_high_bits = (high * other.low) + (low * other.high) + overflow;
 
-    underlying new_low_bits = low_low_bits;
-    if (__builtin_uaddll_overflow(new_low_bits, low_mid_bits_p1 << 32, &new_low_bits)) {
-        ++new_high_bits;
-    }
-    if (__builtin_uaddll_overflow(new_low_bits, low_mid_bits_p2 << 32, &new_low_bits)) {
-        ++new_high_bits;
-    }
-
-    new_high_bits += low_high_bits;
-    new_high_bits += (low_mid_bits_p1 >> 32);
-    new_high_bits += (low_mid_bits_p2 >> 32);
-
-    high = new_high_bits;
     low = new_low_bits;
+    high = new_high_bits;
 
     return *this;
 }
