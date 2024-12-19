@@ -51,6 +51,37 @@ TEST_CASE("post-increment correctly increments small numbers", "[uint128]")
     CHECK(static_cast<wm::uint128::underlying>(num) == 9);
 }
 
+TEST_CASE("spaceship operator correctly compares small numbers", "[uint128]")
+{
+    wm::uint128 eight{8};
+    CHECK(eight <=> eight == std::strong_ordering::equal);
+
+    wm::uint128 nine{9};
+
+    CHECK(eight <=> nine == std::strong_ordering::less);
+    CHECK(nine <=> eight == std::strong_ordering::greater);
+}
+
+TEST_CASE("spaceship operator correctly compares large numbers", "[uint128]")
+{
+    wm::uint128 max64_plus_eight = MAX_UINT64 + 8;
+    CHECK(max64_plus_eight <=> max64_plus_eight == std::strong_ordering::equal);
+
+    wm::uint128 max64_plus_nine = MAX_UINT64 + 9;
+
+    CHECK(max64_plus_eight <=> max64_plus_nine == std::strong_ordering::less);
+    CHECK(max64_plus_nine <=> max64_plus_eight == std::strong_ordering::greater);
+}
+
+TEST_CASE("spaceship operator correctly compares small to large numbers", "[uint128]")
+{
+    wm::uint128 nine = 9;
+    wm::uint128 max64_plus_eight = MAX_UINT64 + 8;
+
+    CHECK(nine <=> max64_plus_eight == std::strong_ordering::less);
+    CHECK(max64_plus_eight <=> nine == std::strong_ordering::greater);
+}
+
 TEST_CASE("pre-increment correctly increments with 64-bit overflow", "[uint128]")
 {
     wm::uint128 num = MAX_UINT64 + 1;
